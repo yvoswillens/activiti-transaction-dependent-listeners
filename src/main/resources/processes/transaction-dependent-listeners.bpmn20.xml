@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+* Copyright 2012-2014 the original author or authors.
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+*      http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+-->
+<definitions id="definitions"
+			 xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+			 xmlns:activiti="http://activiti.org/bpmn"
+			 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+			 xsi:schemaLocation="http://activiti.org/bpmn http://activiti.org/bpmn/activiti-bpmn-extensions-6.0.xsd"
+			 targetNamespace="Examples">
+
+			 <process id="transaction-dependent-listeners">
+
+		         <startEvent id="start">
+					 <extensionElements>
+						 <activiti:executionListener delegateExpression="${myActivityLogger}"
+													 event="start" />
+					 </extensionElements>
+				 </startEvent>
+
+		         <sequenceFlow id="flow1" sourceRef="start" targetRef="script-task-1"/>
+
+			     <scriptTask id="script-task-1" name="Script Task One" activiti:async="true" scriptFormat="groovy">
+					 <extensionElements>
+						 <activiti:executionListener delegateExpression="${myActivityLogger}"
+													 event="start" />
+						 <activiti:executionListener delegateExpression="${myMessageProducer}"
+													 event="start"
+													 onTransaction="committed" />
+					 </extensionElements>
+		             <script>
+		                println 'script task one; start new transaction'
+		             </script>
+			     </scriptTask>
+
+		         <sequenceFlow id="flow2" sourceRef="script-task-1" targetRef="receive-task-1"/>
+				 
+			     <receiveTask id="receive-task-1" name="Wait">
+					 <extensionElements>
+						 <activiti:executionListener delegateExpression="${myActivityLogger}"
+													 event="start" />
+					 </extensionElements>
+			     </receiveTask>
+				 
+		         <sequenceFlow id="flow3" sourceRef="receive-task-1" targetRef="script-task-2"/>
+
+			     <scriptTask id="script-task-2" name="Script Task Two" activiti:async="true" scriptFormat="groovy">
+					 <extensionElements>
+						 <activiti:executionListener delegateExpression="${myActivityLogger}"
+													 event="start" />
+					 </extensionElements>
+		             <script>
+ 		                println 'script task two; start new transaction'
+		             </script>
+			     </scriptTask>
+
+		         <sequenceFlow id="flow4" sourceRef="script-task-2" targetRef="end"/>
+
+		         <endEvent id="end">
+					 <extensionElements>
+						 <activiti:executionListener delegateExpression="${myActivityLogger}"
+													 event="start" />
+					 </extensionElements>
+				 </endEvent>
+
+		     </process>
+
+</definitions>
